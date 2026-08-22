@@ -1,0 +1,57 @@
+{
+  "name": "@staffel/workflow",
+  "version": "0.1.0-alpha.1",
+  "description": "Reusable, deterministic agent-workflow policy for Staffel.",
+  "keywords": [
+    "agent-workflow",
+    "workflow-engine",
+    "state-machine",
+    "automation",
+    "multi-agent"
+  ],
+  "license": "Apache-2.0",
+  "author": "CheckersRT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CheckersRT/staffel.git",
+    "directory": "packages/workflow"
+  },
+  "homepage": "https://github.com/CheckersRT/staffel#readme",
+  "bugs": {
+    "url": "https://github.com/CheckersRT/staffel/issues"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./config-schema": {
+      "types": "./dist/core/config-schema.d.ts",
+      "import": "./dist/core/config-schema.js"
+    },
+    "./schemas/staffel-config-v1.json": "./dist/schemas/staffel-config-v1.json",
+    "./templates": {
+      "types": "./dist/core/templates.d.ts",
+      "import": "./dist/core/templates.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node scripts/write-config-schema.mjs",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\""
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "sideEffects": false
+}

@@ -1,0 +1,41 @@
+{
+  "name": "staffel",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Repository for the Staffel workflow, CLI, and Codex plugin packages.",
+  "license": "Apache-2.0",
+  "author": "CheckersRT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CheckersRT/staffel.git"
+  },
+  "homepage": "https://github.com/CheckersRT/staffel#readme",
+  "bugs": {
+    "url": "https://github.com/CheckersRT/staffel/issues"
+  },
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "check": "npm run lint && npm run test && npm run pack:check",
+    "clean": "npm run clean --workspaces --if-present",
+    "lint": "eslint . && tsc --noEmit -p tsconfig.json",
+    "pack:check": "npm pack --dry-run --cache .npm-cache --workspace @staffel/workflow",
+    "release:version": "changeset version",
+    "test": "npm run build && node --test packages/workflow/test/*.test.mjs"
+  },
+  "devDependencies": {
+    "@changesets/cli": "2.29.7",
+    "@eslint/js": "10.0.1",
+    "eslint": "10.9.0",
+    "globals": "17.11.0",
+    "typescript": "5.9.2",
+    "typescript-eslint": "8.67.0"
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "packageManager": "npm@10.8.2"
+}
