@@ -82,3 +82,41 @@ export interface StaffelTemplatesV1 {
   readonly taskPacket: string;
   readonly liveLedger: string;
 }
+
+export type TransitionOperation = "begin" | "handoff";
+
+export interface TransitionReservation {
+  readonly operation: TransitionOperation;
+  readonly from: string;
+  readonly to: string;
+  readonly reason: string | null;
+  readonly baseCommit: string | null;
+  readonly expectedPacketHash: string | null;
+  readonly packetCommit: string | null;
+}
+
+export interface TaskPacket {
+  readonly taskId: string;
+  readonly name: string;
+  readonly taskType: string;
+  readonly stage: string;
+  readonly nextRole: string;
+  readonly rolePlaybook: string;
+  readonly stageBrief: string;
+  readonly content: string;
+}
+
+export interface LiveLedgerEntry {
+  readonly taskId: string;
+  readonly name: string;
+  readonly section: string;
+  readonly fields: Readonly<Record<string, string>>;
+}
+
+export interface TaskRegistryEntry {
+  readonly taskId: string;
+  readonly name: string;
+  readonly taskType: string;
+  readonly packetPath: string;
+  readonly section: string;
+}

@@ -5,7 +5,8 @@ publish the `@staffel/workflow` package, the `@staffel/cli` package (providing
 the `staffel` command), and the matching skills-only `@staffel/codex-plugin`
 Codex plugin.
 
-The current extraction slice contains the deterministic core only:
+The current extraction includes the deterministic core and repository
+transaction layer:
 
 - versioned `staffel.config.mjs` JSON Schema and runtime validation;
 - stage lookup, begin-stage policy, transition classification, and transition
@@ -14,10 +15,13 @@ The current extraction slice contains the deterministic core only:
 - package-owned blank registry, task-packet, and live-ledger templates;
 - a product-neutral reference configuration covering the complete version 1
   workflow graph.
+- packet, task-registry, and live-ledger parsing/rendering;
+- retry-safe dispatch, begin-stage, and handoff services;
+- filesystem, process, clock, hashing, lock, Git, and stage-sync boundaries;
+- Node filesystem/process/Git adapters exercised against temporary repositories.
 
-Filesystem, Git, tracker, CLI, and host integrations belong in later adapter
-and application layers. Nothing under `packages/workflow/src/core` imports
-Node.js or project-specific infrastructure.
+Tracker, CLI, and host integrations belong in later layers. Nothing under
+`packages/workflow/src/core` imports Node.js or project-specific infrastructure.
 
 ## Development
 
@@ -39,6 +43,10 @@ fixtures/reference/   Product-neutral version 1 reference configuration
 .changeset/           versioning metadata
 .github/workflows/    CI and non-publishing release-candidate packaging
 ```
+
+The full extraction sequence is preserved in
+[`docs/plans/agent-workflow-package-plugin-extraction-plan.md`](docs/plans/agent-workflow-package-plugin-extraction-plan.md).
+It retains the original pre-Staffel names as a historical source plan.
 
 Publishing remains disabled until `@staffel/cli` and
 `@staffel/codex-plugin` are present. All three packages will start at the same
