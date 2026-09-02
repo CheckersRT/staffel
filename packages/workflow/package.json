@@ -21,6 +21,10 @@
     "url": "https://github.com/CheckersRT/staffel/issues"
   },
   "type": "module",
+  "bin": {
+    "staffel": "./dist/cli/bin.js",
+    "agent-workflow": "./dist/cli/bin.js"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -33,6 +37,14 @@
       "import": "./dist/core/config-schema.js"
     },
     "./schemas/staffel-config-v1.json": "./dist/schemas/staffel-config-v1.json",
+    "./schemas/staffel-command-v1.json": "./dist/schemas/staffel-command-v1.json",
+    "./schemas/staffel-input-v1.json": "./dist/schemas/staffel-input-v1.json",
+    "./schemas/staffel-output-v1.json": "./dist/schemas/staffel-output-v1.json",
+    "./schemas/staffel-error-v1.json": "./dist/schemas/staffel-error-v1.json",
+    "./cli": {
+      "types": "./dist/cli/main.d.ts",
+      "import": "./dist/cli/main.js"
+    },
     "./templates": {
       "types": "./dist/core/templates.d.ts",
       "import": "./dist/core/templates.js"

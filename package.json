@@ -24,7 +24,11 @@
     "lint": "eslint . && tsc --noEmit -p tsconfig.json",
     "pack:check": "npm pack --dry-run --cache .npm-cache --workspace @staffel/workflow",
     "release:version": "changeset version",
-    "test": "npm run build && node --test packages/workflow/test/*.test.mjs"
+    "test": "npm run build && node --test packages/workflow/test/*.test.mjs",
+    "agent:dispatch": "node packages/workflow/dist/cli/bin.js agent:dispatch --json",
+    "agent:stage": "node packages/workflow/dist/cli/bin.js agent:stage --json",
+    "agent:handoff": "node packages/workflow/dist/cli/bin.js agent:handoff --json",
+    "trello:agent": "node packages/workflow/dist/cli/bin.js trello:agent --json"
   },
   "devDependencies": {
     "@changesets/cli": "2.29.7",

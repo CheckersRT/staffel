@@ -44,6 +44,8 @@ export interface TrelloTrackerConfig {
   readonly boardIdEnvironmentVariable: string;
   readonly apiKeyEnvironmentVariable: string;
   readonly tokenEnvironmentVariable: string;
+  readonly listIds: Readonly<Record<string, string>>;
+  readonly taskTypeLabelIds: Readonly<Record<string, string>>;
 }
 
 export type TrackerConfig = NoTrackerConfig | TrelloTrackerConfig;

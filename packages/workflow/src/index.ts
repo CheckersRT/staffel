@@ -61,6 +61,24 @@ export {
   Sha256ContentHasher,
   SystemClockAdapter,
 } from "./adapters/node.js";
+export {
+  FetchTrackerHttpAdapter,
+  NoTrackerAdapter,
+  TrackerAdapterError,
+  TrelloTrackerAdapter,
+  trelloCredentialsFromEnvironment,
+} from "./adapters/tracker.js";
+export {
+  CLI_COMMANDS,
+  STAFFEL_CAPABILITIES_V1,
+  STAFFEL_CLI_VERSION,
+  STAFFEL_COMMAND_SCHEMA_V1,
+  STAFFEL_ERROR_SCHEMA_V1,
+  STAFFEL_INPUT_SCHEMA_V1,
+  STAFFEL_OUTPUT_SCHEMA_V1,
+} from "./cli/contracts.js";
+export { CLI_EXIT_CODES, CliError } from "./cli/errors.js";
+export { runCli } from "./cli/main.js";
 export type {
   LedgerMutation,
   RenderLiveLedgerEntryInput,
@@ -78,6 +96,7 @@ export type {
   StageDefinition,
   StageKind,
   TrackerConfig,
+  TrelloTrackerConfig,
   TransitionClassification,
   TransitionOperation,
   TransitionReservation,
@@ -110,3 +129,11 @@ export type {
   WorkflowStoragePort,
 } from "./application/ports.js";
 export type { NodeWorkflowStorageOptions } from "./adapters/node.js";
+export type {
+  TrackerHttpPort,
+  TrackerHttpRequest,
+  TrackerHttpResponse,
+  TrelloCredentials,
+} from "./adapters/tracker.js";
+export type { TrackerDiagnostic, TrackerPort } from "./application/tracker.js";
+export type { CliIo, CliRunResult } from "./cli/main.js";
