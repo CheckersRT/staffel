@@ -19,6 +19,7 @@ import type { TrackerPort } from "../application/tracker.js";
 import { WorkflowService } from "../application/workflow-service.js";
 import {
   findLiveLedgerEntry,
+  packetStage,
   parseLiveLedger,
   parseTaskPacket,
   parseTaskRegistry,
@@ -290,7 +291,7 @@ export function validateEmbeddedV1(runtime: StaffelRuntime, dryRun: boolean): un
   const registry = parseTaskRegistry(registryContent);
   const ledger = parseLiveLedger(ledgerContent);
   const ids = new Set<string>();
-  const packets = new Map<string, ReturnType<typeof parseTaskPacket>>();
+  const packets = new Map<string, string>();
   const artifacts: Array<{ path: string; sha256: string }> = [];
   artifacts.push(digestArtifact(runtime.config.repository.paths.registry, registryContent));
   artifacts.push(digestArtifact(runtime.config.repository.paths.liveLedger, ledgerContent));
@@ -301,10 +302,12 @@ export function validateEmbeddedV1(runtime: StaffelRuntime, dryRun: boolean): un
       throw stateError(`Missing embedded-v1 packet for task #${entry.taskId}: ${entry.packetPath}`);
     }
     const content = runtime.storage.readPacket(entry.packetPath);
-    const packet = parseTaskPacket(content);
-    assertPacketIdentity(entry, packet.taskId, packet.name, packet.taskType);
-    getStage(runtime.config, packet.stage);
-    packets.set(entry.taskId, packet);
+    const packetId = embeddedV1PacketId(content);
+    if (entry.taskId !== packetId) {
+      throw stateError(`Embedded-v1 packet identity mismatch for task #${entry.taskId}.`);
+    }
+    packetStage(content);
+    packets.set(entry.taskId, content);
     artifacts.push(digestArtifact(entry.packetPath, content));
   }
   for (const entry of ledger) {
@@ -317,11 +320,15 @@ export function validateEmbeddedV1(runtime: StaffelRuntime, dryRun: boolean): un
     const stage = entry.fields.Stage;
     if (!stage) throw stateError(`Live ledger task #${entry.taskId} has no Stage.`);
     const registryEntry = registry.find((item) => item.taskId === entry.taskId);
-    const packet = packets.get(entry.taskId);
-    if (!registryEntry || !packet) throw stateError(`Missing embedded-v1 identity for task #${entry.taskId}.`);
+    const packetContent = packets.get(entry.taskId);
+    if (!registryEntry || !packetContent) throw stateError(`Missing embedded-v1 identity for task #${entry.taskId}.`);
     if (entry.name !== registryEntry.name || entry.fields["Task packet"] !== registryEntry.packetPath) {
       throw stateError(`Embedded-v1 ledger identity mismatch for task #${entry.taskId}.`);
     }
+    // Archived packets only need a stable identity and stage. Active packets must
+    // also satisfy the executable packet contract used by workflow transitions.
+    const packet = parseTaskPacket(packetContent);
+    assertPacketIdentity(registryEntry, packet.taskId, packet.name, packet.taskType);
     if (stage !== "dispatching") {
       getStage(runtime.config, stage);
       if (!getExpectedPacketStages(runtime.config, stage).includes(packet.stage)) {
@@ -340,6 +347,13 @@ export function validateEmbeddedV1(runtime: StaffelRuntime, dryRun: boolean): un
     counts: { registry: registry.length, packets: artifacts.length - 2, ledger: ledger.length },
     artifacts,
   };
+}
+
+function embeddedV1PacketId(content: string): string {
+  const title = content.replace(/\r\n/g, "\n").split("\n", 1)[0] ?? "";
+  const match = title.match(/^#\s*#?\s*0*(\d+[A-Za-z]?)\s+\S/);
+  if (!match?.[1]) throw stateError("Embedded-v1 packet is missing its task title.");
+  return normalizeTaskId(match[1]);
 }
 
 export function trackerTask(runtime: StaffelRuntime, taskId: string): {

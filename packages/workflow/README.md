@@ -24,6 +24,10 @@ The full command surface is `init`, `dispatch`, `stage`, `handoff`, `tracker`,
 `migrate --from embedded-v1` validator. All mutating workflow commands support
 `--dry-run`.
 
+The migration validator leaves artifacts untouched. It accepts historical
+packets with older section layouts in the registry, but requires packets in
+the active ledger to satisfy the executable packet contract before cutover.
+
 Trello configuration keeps credentials indirect and repository-owned:
 
 ```js

@@ -130,6 +130,51 @@ test("CLI completes dispatch, begin, dry-run handoff, handoff, status, doctor, a
   assert.deepEqual(artifactHashes(root), beforeMigration);
 });
 
+test("embedded-v1 validation preserves historical Liaura packet formats", async (t) => {
+  const root = createRepository(t);
+  const config = structuredClone(referenceFixture);
+  config.repository.paths = {
+    registry: "docs/task-registry.md",
+    taskPackets: "docs/tasks",
+    liveLedger: "scratch/agent-coordination/workstreams.md",
+    rolePlaybooks: "docs/agents/roles",
+  };
+  fs.writeFileSync(path.join(root, "staffel.config.mjs"), `export default ${JSON.stringify(config)};\n`);
+  fs.mkdirSync(path.join(root, "docs/tasks"), { recursive: true });
+  fs.mkdirSync(path.join(root, "scratch/agent-coordination"), { recursive: true });
+  const artifacts = {
+    "docs/task-registry.md": `# Project Task Registry\n\n- [x] #18C Historical task.\n      Type: Maintenance\n      Task packet: [docs/tasks/0018c-historical-task.md](tasks/0018c-historical-task.md)\n\n- [ ] #42 Current task.\n      Type: Feature\n      Task packet: [docs/tasks/0042-current-task.md](tasks/0042-current-task.md)\n`,
+    "docs/tasks/0018c-historical-task.md": `# #18C Historical task\n\n## Current Stage\n\n- Stage: closed\n- Next role: none\n- Role playbook: docs/agents/roles/release.md\n\n## Historical Start Prompt\n\nCompleted before Staffel.\n`,
+    "docs/tasks/0042-current-task.md": `#42 Current task\n\n## Stable Brief\n\n- Type: Feature\n\n## Current Stage\n\n- Stage: ready-for-implementation\n- Next role: implementation\n- Role playbook: docs/agents/roles/implementation.md\n\n## Stage Brief\n\n- Goal: Continue the task.\n`,
+    "scratch/agent-coordination/workstreams.md": `# Agent Workstreams\n\n## Active Workstreams\n\n### 0042 Current task\n\nStatus: in-progress\nStage: ready-for-implementation\nTask packet: docs/tasks/0042-current-task.md\n\n## Recently Closed\n`,
+  };
+  for (const [name, content] of Object.entries(artifacts)) {
+    fs.writeFileSync(path.join(root, name), content);
+  }
+  const before = Object.fromEntries(Object.keys(artifacts).map((name) => [
+    name, createHash("sha256").update(fs.readFileSync(path.join(root, name))).digest("hex"),
+  ]));
+
+  const migration = await invoke(["migrate", "--repository", root, "--from", "embedded-v1"]);
+  assert.equal(migration.exitCode, 0, JSON.stringify(migration.output));
+  assert.deepEqual(migration.output.result.counts, { registry: 2, packets: 2, ledger: 1 });
+  assert.equal(migration.output.result.rewritten, false);
+  const after = Object.fromEntries(Object.keys(artifacts).map((name) => [
+    name, createHash("sha256").update(fs.readFileSync(path.join(root, name))).digest("hex"),
+  ]));
+  assert.deepEqual(after, before);
+
+  fs.writeFileSync(
+    path.join(root, "scratch/agent-coordination/workstreams.md"),
+    artifacts["scratch/agent-coordination/workstreams.md"].replace(
+      "## Recently Closed",
+      "### 0018C Historical task\n\nStatus: in-progress\nStage: ready-for-implementation\nTask packet: docs/tasks/0018c-historical-task.md\n\n## Recently Closed"
+    )
+  );
+  const activeLegacy = await invoke(["migrate", "--repository", root, "--from", "embedded-v1"]);
+  assert.equal(activeLegacy.exitCode, 4);
+});
+
 test("CLI traverses the reference lifecycle through cleanup-pending", async (t) => {
   const root = createRepository(t);
   fs.copyFileSync(referenceConfig, path.join(root, "staffel.config.mjs"));
