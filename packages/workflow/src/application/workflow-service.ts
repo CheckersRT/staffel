@@ -178,7 +178,7 @@ export class WorkflowService {
       this.#config.repository.paths.taskPackets,
       `${paddedTaskId(taskId)}-${slug}.md`
     );
-    const task = this.#syncTask(taskId, input.name, packetPath);
+    const task = this.#syncTask(taskId, input.name, taskType, packetPath);
     const currentSync = await this.#inspectStage(task);
     const resultBase = {
       task: taskId,
@@ -351,7 +351,7 @@ export class WorkflowService {
     if (existingPending && existingPending.operation !== "begin") {
       throw new Error("A different handoff transition is pending.");
     }
-    const task = this.#syncTask(initial.taskId, initial.packet.name, initial.packetPath);
+    const task = this.#syncTask(initial.taskId, initial.packet.name, initial.packet.taskType, initial.packetPath);
     const currentSync = await this.#inspectStage(task);
     if (!existingPending && isRoleActiveStage(this.#config, from)) {
       await this.#verifyCompleted(initial, from, "begin");
@@ -435,7 +435,7 @@ export class WorkflowService {
     const from = initial.entry.fields.Stage;
     if (!from) throw new Error(`Live-ledger task #${initial.taskId} has no Stage.`);
     const destination = getStage(this.#config, input.to);
-    const task = this.#syncTask(initial.taskId, initial.packet.name, initial.packetPath);
+    const task = this.#syncTask(initial.taskId, initial.packet.name, initial.packet.taskType, initial.packetPath);
     const currentSync = await this.#inspectStage(task);
     const existingPending = pendingTransition(initial.entry);
     if (
@@ -744,7 +744,7 @@ export class WorkflowService {
       throw new Error("Final ledger still has a pending transition.");
     }
     const sync = await this.#inspectStage(
-      this.#syncTask(context.taskId, context.packet.name, context.packetPath)
+      this.#syncTask(context.taskId, context.packet.name, context.packet.taskType, context.packetPath)
     );
     if (sync.position !== null && sync.position !== destination.trackerList) {
       throw new Error(`Stage synchronizer is at ${sync.position}, expected ${destination.trackerList}.`);
@@ -962,8 +962,8 @@ export class WorkflowService {
     return formatTimestamp(this.#clock.now(), this.#config.repository.timezone);
   }
 
-  #syncTask(taskId: string, name: string, packetPath: string): StageSyncTask {
-    return { taskId, title: `#${taskId} ${name}`, packetPath };
+  #syncTask(taskId: string, name: string, taskType: string, packetPath: string): StageSyncTask {
+    return { taskId, title: `#${taskId} ${name}`, taskType, packetPath };
   }
 
   async #inspectStage(task: StageSyncTask): Promise<StageSyncState> {

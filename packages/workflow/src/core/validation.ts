@@ -31,6 +31,7 @@ export function validateStaffelConfig(value: unknown): readonly ValidationIssue[
   validateRepository(value.repository, issues);
   validateWorkflow(value.workflow, issues);
   validateTracker(value.tracker, issues);
+  validateTrackerMappings(value, issues);
   return issues;
 }
 
@@ -222,16 +223,60 @@ function validateTracker(value: unknown, issues: ValidationIssue[]): void {
   if (value.provider === "trello") {
     exactKeys(
       value,
-      ["provider", "boardIdEnvironmentVariable", "apiKeyEnvironmentVariable", "tokenEnvironmentVariable"],
+      [
+        "provider",
+        "boardIdEnvironmentVariable",
+        "apiKeyEnvironmentVariable",
+        "tokenEnvironmentVariable",
+        "listIds",
+        "taskTypeLabelIds",
+      ],
       path,
       issues
     );
     for (const key of ["boardIdEnvironmentVariable", "apiKeyEnvironmentVariable", "tokenEnvironmentVariable"] as const) {
       stringAt(value[key], `${path}.${key}`, issues);
     }
+    validateStringRecord(value.listIds, `${path}.listIds`, issues);
+    validateStringRecord(value.taskTypeLabelIds, `${path}.taskTypeLabelIds`, issues);
+    if (isRecord(value.listIds)) {
+      const ids = Object.values(value.listIds).filter((item): item is string => typeof item === "string");
+      if (ids.length === 0) issue(issues, `${path}.listIds`, "must not be empty");
+      if (new Set(ids).size !== ids.length) issue(issues, `${path}.listIds`, "must not contain duplicate ids");
+    }
     return;
   }
   issue(issues, `${path}.provider`, "must be none or trello");
+}
+
+function validateTrackerMappings(value: Record<string, unknown>, issues: ValidationIssue[]): void {
+  if (!isRecord(value.tracker) || value.tracker.provider !== "trello") return;
+  if (!isRecord(value.workflow) || !isRecord(value.workflow.stages)) return;
+  if (!isRecord(value.tracker.listIds)) return;
+  const configuredLists = value.tracker.listIds;
+  for (const [stageName, stage] of Object.entries(value.workflow.stages)) {
+    if (!isRecord(stage) || typeof stage.trackerList !== "string") continue;
+    if (!(stage.trackerList in configuredLists)) {
+      issue(
+        issues,
+        `$.tracker.listIds.${stage.trackerList}`,
+        `is required by workflow stage ${stageName}`
+      );
+    }
+  }
+  if (!isRecord(value.repository) || !Array.isArray(value.repository.taskTypes)) return;
+  if (!isRecord(value.tracker.taskTypeLabelIds)) return;
+  const taskTypes = new Set(value.repository.taskTypes.filter((item): item is string => typeof item === "string"));
+  for (const taskType of taskTypes) {
+    if (!(taskType in value.tracker.taskTypeLabelIds)) {
+      issue(issues, `$.tracker.taskTypeLabelIds.${taskType}`, "is required for the configured task type");
+    }
+  }
+  for (const taskType of Object.keys(value.tracker.taskTypeLabelIds)) {
+    if (!taskTypes.has(taskType)) {
+      issue(issues, `$.tracker.taskTypeLabelIds.${taskType}`, "does not name a configured task type");
+    }
+  }
 }
 
 function exactKeys(

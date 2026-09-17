@@ -47,6 +47,7 @@ export interface StageSyncState {
 export interface StageSyncTask {
   readonly taskId: string;
   readonly title: string;
+  readonly taskType: string;
   readonly packetPath: string;
 }
 
