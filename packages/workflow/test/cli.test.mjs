@@ -182,6 +182,23 @@ test("init refuses to overwrite existing workflow state", async (t) => {
   assert.equal(fs.readFileSync(path.join(root, ".staffel/task-registry.md"), "utf8"), "# Existing workflow\n");
 });
 
+test("init does not commit pre-existing edits to tracked files", async (t) => {
+  const root = createRepository(t);
+  fs.writeFileSync(path.join(root, ".gitignore"), "existing-ignore\n");
+  git(root, ["add", ".gitignore"]);
+  git(root, ["commit", "-m", "add gitignore"]);
+  fs.writeFileSync(path.join(root, ".gitignore"), "existing-ignore\nuser-edit\n");
+  const headBefore = git(root, ["rev-parse", "HEAD"]);
+
+  const response = await invoke(["init", "--repository", root]);
+  assert.equal(response.exitCode, 4);
+  assert.match(response.output.error.message, /pre-existing tracked changes/);
+  assert.equal(git(root, ["rev-parse", "HEAD"]), headBefore);
+  assert.equal(fs.readFileSync(path.join(root, ".gitignore"), "utf8"), "existing-ignore\nuser-edit\n");
+  assert.equal(fs.existsSync(path.join(root, "staffel.config.mjs")), false);
+  assert.equal(fs.existsSync(path.join(root, ".staffel/task-registry.md")), false);
+});
+
 test("tracker credential failures use the stable tracker exit code without an HTTP request", async (t) => {
   const root = createRepository(t);
   const config = structuredClone(referenceFixture);

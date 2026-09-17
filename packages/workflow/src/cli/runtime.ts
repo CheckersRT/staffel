@@ -173,6 +173,11 @@ export async function initializeRepository(input: {
   if (unrelatedBefore.length > 0) {
     throw stateError(`Refusing to initialize with unrelated local changes: ${unrelatedBefore.join(", ")}`);
   }
+  const modifiedTracked = git.changedPaths([configRepoPath, registryRepoPath, ".gitignore"])
+    .filter((item) => git.readHeadFile(item) !== null);
+  if (modifiedTracked.length > 0) {
+    throw stateError(`Refusing to initialize with pre-existing tracked changes: ${modifiedTracked.join(", ")}`);
+  }
   for (const target of targets) {
     if (!existsSync(target.path)) {
       mkdirSync(path.dirname(target.path), { recursive: true });
